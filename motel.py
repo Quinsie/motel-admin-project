@@ -1,5 +1,6 @@
 import tkinter
 import tkinter.font
+import tkinter.ttk
 import time
 
 # room frame
@@ -9,8 +10,9 @@ class room:
         self.pos_x = a
         self.pos_y = b
         self.flag = 0
-        self.start_time = -1
-        self.type = 0 # 0 = normal, 1 = suite
+        self.start_time = 0
+        self.people_num = 0
+        self.rtype = 1 if a == 2 or a == 5 else 0 # 0 = normal, 1 = suite
 
         self.block = tkinter.Frame(window, relief = "solid")
         self.block.pack()
@@ -35,19 +37,74 @@ class room:
         if b < 4:  self.block.place(x = 215 + (b - 1) * 117, y = 560 - (a - 2) * 133)
         else : self.block.place(x = 215 + (b - 2) * 117, y = 560 - (a - 2) * 133)
     
-    def room_config(self):
-        # new window base settings
+    def init(self):
+        new_window.destroy()
+    
+    def rent_config(self):
         global new_window
+        global rent_price
+        
+        # new window base settings
+        new_window = tkinter.Toplevel()
+        new_window.title("객실 정보 입력")
+        new_window.geometry("480x320")
+        new_window.configure(background = "white")
+        
+        # room basic info initialize
+        room_font = tkinter.font.Font(family = "Noto Sans KR", size = 12)
+        room_name = tkinter.Label(new_window, font = ("Noto Sans KR Black", 18, "bold"), bg = "white")
+        room_name.config(text = str(self.pos_x * 100 + self.pos_y) + "호 대실 정보 입력")
+        room_name.place(x = 150, y = 5)
+        
+        room_status_title = tkinter.Label(new_window, bg = "white", font = room_font, text = "방 상태 : ")
+        room_status_title.place(x = 20, y = 100)
+        room_status = tkinter.Label(new_window, bg = "white", font = room_font, text = "빈  방")
+        room_status.place(x = 100, y = 100)
+        
+        room_type_title = tkinter.Label(new_window, bg = "white", font = room_font, text = "방 종류 : ")
+        room_type_title.place(x = 20, y = 160)
+        room_type = tkinter.Label(new_window, bg = "white", font = room_font, text = "일반실" if self.rtype == 0 else "특실")
+        room_type.place(x = 100, y = 160)
+        
+        room_bill_title = tkinter.Label(new_window, bg = "white", font = room_font, text = "요금 : ")
+        room_bill_title.place(x = 20, y = 220)
+        room_bill = tkinter.Label(new_window, bg = "white", font = room_font, text = str(rent_price) + "원")
+        room_bill.place(x = 100, y = 220)
+        
+        time_title = tkinter.Label(new_window, bg = "white", font = room_font, text = "대실 시작 시간 : ")
+        time_title.place(x = 230, y = 100)
+        time_list = [str(i) for i in range(24)]
+        time_select = tkinter.ttk.Combobox(new_window, height = 24, values = time_list, state = "readonly", width = 10)
+        time_select.current(self.start_time)
+        time_select.place(x = 350, y = 100)
+        self.start_time = int(time_select.get())
+        
+        people_title = tkinter.Label(new_window, bg = "white", font = room_font, text = "투숙객 인원 : ")
+        people_title.place(x = 230, y = 160)
+        people_list = [str(i) for i in range(1, 7)]
+        people = tkinter.ttk.Combobox(new_window, height = 6, values = people_list, state = "readonly", width = 10)
+        people.current(0)
+        people.place(x = 350, y = 160)
+        self.people_num = int(people.get())
+        
+        confirm_button = tkinter.Button(new_window, width = 9, height = 1, text = "확인", font = ("NOto Sans KR", 8, "bold"), command = self.init)
+        confirm_button.place(x = 200, y = 280)
+        
+    def sleep_config(self):
+        global new_window
+        global sleep_price
+        
+        # new window base settings
         new_window = tkinter.Toplevel()
         new_window.title("객실 정보 입력")
         new_window.geometry("640x480")
         new_window.configure(background = "white")
         
+        # room basic info initialize
+        room_font = tkinter.font.Font(family = "Noto Sans KR", size = 12)
         room_name = tkinter.Label(new_window, font = ("Noto Sans KR Black", 18, "bold"), bg = "white")
-        if self.flag == 1:  room_name.config(text = str(self.pos_x * 100 + self.pos_y) + "호 대실 정보 입력")
-        if self.flag == 2:  room_name.config(text = str(self.pos_x * 100 + self.pos_y) + "호 숙박 정보 입력")
+        room_name.config(text = str(self.pos_x * 100 + self.pos_y) + "호 숙박 정보 입력")
         room_name.place(x = 215, y = 5)
-        
         
         
     
@@ -58,7 +115,7 @@ class room:
         
         change_void(self.flag)
         self.flag = 0
-        self.start_time = -1
+        self.start_time = 0
     
     def to_rent(self):
         self.square.config(bg = "#9ECCFF", activebackground = "#9ECCFF")
@@ -66,9 +123,10 @@ class room:
         self.status_name.config(text = "대   실")
         
         change_rent(self.flag)
-        self.flag = 1
         
-        self.room_config()
+        if self.flag != 1:
+            self.rent_config()
+            self.flag = 1
     
     def to_sleep(self):
         self.square.config(bg = "#FF9E9E", activebackground = "#FF9E9E")
@@ -76,12 +134,13 @@ class room:
         self.status_name.config(text = "숙   박")
         
         change_sleep(self.flag)
-        self.flag = 2
-        
-        self.room_config()
+
+        if self.flag != 2:
+            self.sleep_config()
+            self.flag = 2
 
     def display_info(self):
-        display_room_info(self.pos_x, self.pos_y, self.flag)
+        display_room_info(self.pos_x, self.pos_y, self.flag, self.rtype, self.start_time, self.people_num)
 
 
 def clock(): # 현재 시간 표시 / 반복
@@ -137,13 +196,23 @@ def change_sleep(flag):
         room_status_value_void.config(text = str(void_room))
         room_status_value_rent.config(text = str(rent_room))
 
-def display_room_info(a, b, flag):
+def display_room_info(a, b, flag, rtype, start_time, people_num):
     displayer_now_room.config(text = str(a * 100 + b) + " 호")
 
     if flag == 0: displayer_status.config(text = "빈   방", fg = "black")
     elif flag == 1: displayer_status.config(text = "대   실", fg = "blue")
     else: displayer_status.config(text = "숙   박", fg = "red")
     
+    if rtype == 0: displayer_now_type.config(text = "일반실")
+    else: displayer_now_type.config(text = "특실")
+    
+    displayer_start_time.config(text = str(start_time) + "시")
+    if flag == 0: displayer_end_time.config(text = str(start_time) + "시")
+    elif flag == 1: displayer_end_time.config(text = str(start_time + 5) + "시")
+    else: displayer_end_time.config(text = "11시")
+    
+    if flag == 0: displayer_people_num.config(text = "0명")
+    else: displayer_people_num.config(text = str(people_num) + "명")
         
 if __name__ == "__main__":
     # initialize
@@ -280,8 +349,27 @@ if __name__ == "__main__":
     displayer_status_title = tkinter.Label(displayer_inside_window, bg = "white", text = "상태 : ", font = displayer_default_font)
     displayer_status_title.place(x = 15, y = 35)
     displayer_status = tkinter.Label(displayer_inside_window, bg = "white", text = "빈   방", font = displayer_default_font)
-    displayer_status.place(x = 75, y = 35)
+    displayer_status.place(x = 95, y = 35)
     
+    displayer_now_type_title = tkinter.Label(displayer_inside_window, bg = "white", text = "방 종류 : ", font = displayer_default_font)
+    displayer_now_type_title.place(x = 15, y = 65)
+    displayer_now_type = tkinter.Label(displayer_inside_window, bg = "white", text = "none", font = displayer_default_font)
+    displayer_now_type.place(x = 95, y = 65)
+    
+    displayer_start_time_title = tkinter.Label(displayer_inside_window, bg = "white", text = "입실 시간 : ", font = displayer_default_font)
+    displayer_start_time_title.place(x = 15, y = 115)
+    displayer_start_time = tkinter.Label(displayer_inside_window, bg = "white", text = "0시", font = displayer_default_font)
+    displayer_start_time.place(x = 95, y = 115)
+    
+    displayer_end_time_title = tkinter.Label(displayer_inside_window, bg = "white", text = "퇴실 시간 : ", font = displayer_default_font)
+    displayer_end_time_title.place(x = 15, y = 145)
+    displayer_end_time = tkinter.Label(displayer_inside_window, bg = "white", text = "5시", font = displayer_default_font)
+    displayer_end_time.place(x = 95, y = 145)
+    
+    displayer_people_num_title = tkinter.Label(displayer_inside_window, bg = "white", text = "투숙 인원 : ", font = displayer_default_font)
+    displayer_people_num_title.place(x = 15, y = 195)
+    displayer_people_num = tkinter.Label(displayer_inside_window, bg = "white", text = "0명", font = displayer_default_font)
+    displayer_people_num.place(x = 95, y = 195)
 
     # room initialize
     building = []
